@@ -201,6 +201,9 @@ build() {
   local _LDFLAGS_FOR_TARGET="$LDFLAGS"
   LDFLAGS+=" -Wl,--disable-dynamicbase"
 
+  export CFLAGS="-march=i686 -mtune=generic -O0 -pipe"
+  export CXXFLAGS="-march=i686 -mtune=generic -O0 -pipe"
+
   ../${_sourcedir}/configure \
     --prefix=${MINGW_PREFIX} \
     --with-local-prefix=${MINGW_PREFIX}/local \
