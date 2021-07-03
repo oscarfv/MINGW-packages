@@ -249,7 +249,7 @@ build() {
     sed -i 's,^STRIP_FOR_TARGET=.*$,STRIP_FOR_TARGET=true,g' Makefile
   fi
 
-  make BOOT_CFLAGS='-O1' V=1 all
+  make BOOT_CFLAGS='-O0' V=1
 
   rm -rf ${srcdir}${MINGW_PREFIX}
 
