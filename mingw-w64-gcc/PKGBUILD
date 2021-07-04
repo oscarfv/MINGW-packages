@@ -75,6 +75,7 @@ source=("https://ftp.gnu.org/gnu/gcc/${_realname}-${pkgver%%+*}/${_realname}-${p
         0140-gcc-8.2.0-diagnostic-color.patch
         0150-gcc-10.2.0-libgcc-ldflags.patch
         0160-libbacktrace-seh.patch
+	0170-Windows-eh-pointer.patch
         0200-ms_printf-improvements.patch
         0203-backport-longjmp-fix.patch)
 sha256sums=('64f404c1a650f27fc33da242e1f2df54952e3963a49e06e73f6940f3223ac344'
@@ -100,6 +101,7 @@ sha256sums=('64f404c1a650f27fc33da242e1f2df54952e3963a49e06e73f6940f3223ac344'
             '5240a9e731b45c17a164066c7eb193c1fbee9fd8d9a2a5afa2edbcde9510da47'
             '7f0b4e45d933e18c9d8bd2afcd83e4f52e97e2e25dd41bfa0cba755c70e591c7'
             '88c1d65e763e631ad49f9a077ed631f4acac9ef4732e2818ccddaefc883b1811'
+            'SKIP'
             '146ac7aec004a949e42f7da6ff66351790e56094a85f6dbe28ea583b47c8125d'
             'a1ca2f5dd55823e29f6628dd5027057636cf3d5998c438f365a84f7ec4b7eaa6')
 validpgpkeys=(F3691687D867B81B51CE07D9BBE43771487328A9  # bpiotrowski@archlinux.org
@@ -165,6 +167,9 @@ prepare() {
   # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96948
   apply_patch_with_msg \
     0160-libbacktrace-seh.patch
+
+  apply_patch_with_msg \
+      0170-Windows-eh-pointer.patch
 
   # https://gcc.gnu.org/git/?p=gcc.git;a=commit;h=c51f1e7427e6a5ae2a6d82b5a790df77a3adc99a
   apply_patch_with_msg \
