@@ -201,8 +201,8 @@ build() {
   local _LDFLAGS_FOR_TARGET="$LDFLAGS"
   LDFLAGS+=" -Wl,--disable-dynamicbase"
 
-  export CFLAGS="-march=i686 -mtune=generic -Og -pipe"
-  export CXXFLAGS="-march=i686 -mtune=generic -Og -pipe"
+  export CFLAGS=""
+  export CXXFLAGS=""
 
   ../${_sourcedir}/configure \
     --prefix=${MINGW_PREFIX} \
@@ -252,7 +252,7 @@ build() {
     sed -i 's,^STRIP_FOR_TARGET=.*$,STRIP_FOR_TARGET=true,g' Makefile
   fi
 
-  make BOOT_CFLAGS='-Og' V=1
+  make V=1
 
   rm -rf ${srcdir}${MINGW_PREFIX}
 
