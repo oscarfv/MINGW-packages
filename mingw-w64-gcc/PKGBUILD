@@ -201,8 +201,8 @@ build() {
   local _LDFLAGS_FOR_TARGET="$LDFLAGS"
   LDFLAGS+=" -Wl,--disable-dynamicbase"
 
-  export CFLAGS=""
-  export CXXFLAGS=""
+  export CFLAGS="-gdwarf-4"
+  export CXXFLAGS="-gdwarf-4"
 
   ../${_sourcedir}/configure \
     --prefix=${MINGW_PREFIX} \
@@ -252,7 +252,7 @@ build() {
     sed -i 's,^STRIP_FOR_TARGET=.*$,STRIP_FOR_TARGET=true,g' Makefile
   fi
 
-  make V=1
+  make "BOOT_CFLAGS=-gdwarf-4" V=1
 
   rm -rf ${srcdir}${MINGW_PREFIX}
 
