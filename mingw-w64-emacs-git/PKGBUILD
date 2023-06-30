@@ -1,0 +1,102 @@
+# Maintainer: Haroogan <Haroogan@gmail.com>
+# Maintainer: Oscar Fuentes <ofv@wanadoo.es>
+
+_enable_jit=$([[ "${MINGW_PREFIX}" =~ /clang.* ]] || echo yes)
+_realname='emacs'
+pkgbase=mingw-w64-${_realname}-git
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}-git"
+pkgver=r156906.8ebfcff3a6
+pkgrel=1
+pkgdesc="The extensible, customizable, self-documenting, real-time display editor (mingw-w64)"
+url="https://www.gnu.org/software/${_realname}/"
+license=('GPL3')
+arch=('any')
+mingw_arch=('mingw32' 'mingw64' 'ucrt64' 'clang64')
+provides=("${MINGW_PACKAGE_PREFIX}-${_realname}")
+conflicts=("${MINGW_PACKAGE_PREFIX}-${_realname}")
+depends=("${MINGW_PACKAGE_PREFIX}-universal-ctags-git"
+	 $([[ "$_enable_jit" == "yes" ]] && echo "${MINGW_PACKAGE_PREFIX}-libgccjit")
+         "${MINGW_PACKAGE_PREFIX}-zlib"
+         "${MINGW_PACKAGE_PREFIX}-xpm-nox"
+	 "${MINGW_PACKAGE_PREFIX}-freetype"
+         "${MINGW_PACKAGE_PREFIX}-harfbuzz"
+         "${MINGW_PACKAGE_PREFIX}-jansson"
+         "${MINGW_PACKAGE_PREFIX}-gnutls"
+         "${MINGW_PACKAGE_PREFIX}-libwinpthread")
+optdepends=("${MINGW_PACKAGE_PREFIX}-giflib"
+            "${MINGW_PACKAGE_PREFIX}-libjpeg-turbo"
+            "${MINGW_PACKAGE_PREFIX}-libpng"
+            "${MINGW_PACKAGE_PREFIX}-librsvg"
+            "${MINGW_PACKAGE_PREFIX}-libtiff"
+            "${MINGW_PACKAGE_PREFIX}-libxml2")
+makedepends=("${MINGW_PACKAGE_PREFIX}-cc"
+             "${MINGW_PACKAGE_PREFIX}-autotools"
+             "texinfo"
+             "patch"
+	     "git"
+             "${optdepends[@]}")
+# Don't zip info files because the built-in info reader uses gzip to
+# decompress them. gzip is not available as a mingw binary.
+options=('strip' '!zipman')
+source=("${_realname}"::"git+https://git.savannah.gnu.org/git/${_realname}.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "${_realname}"
+  printf 'r%s.%s' "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+prepare() {
+  cd "${_realname}"
+  ./autogen.sh
+}
+
+build() {
+  [[ -d "${srcdir}/build-${MSYSTEM}" ]] && rm -rf "${srcdir}/build-${MSYSTEM}"
+  mkdir -p "${srcdir}/build-${MSYSTEM}"
+  cd "build-${MSYSTEM}"
+
+  _extra_cfg=""
+  if [[ "$_enable_jit" == "yes" ]] ; then
+      _extra_cfg="$_extra_cfg --with-native-compilation"
+  fi
+
+  # Required for nanosleep with clang
+  export LDFLAGS="${LDFLAGS} -lpthread"
+  # -D_FORTIFY_SOURCE breaks build
+  CFLAGS=${CFLAGS//"-Wp,-D_FORTIFY_SOURCE=2"}
+  # -foptimize-sibling-calls breaks native compilation (GCC 13.1)
+  CFLAGS+=" -fno-optimize-sibling-calls"
+
+  "${srcdir}/${_realname}/configure" \
+    --prefix="${MINGW_PREFIX}" \
+    --host="${MINGW_CHOST}" \
+    --build="${MINGW_CHOST}" \
+    --with-modules \
+    --without-dbus \
+    --without-compress-install \
+    $_extra_cfg
+
+  # --without-compress-install is needed because we don't have gzip in
+  # the mingw binaries and it is also required by native compilation.
+
+  make
+}
+
+package() {
+  cd "build-${MSYSTEM}"
+  make DESTDIR="${pkgdir}" install
+  rm -f "${pkgdir}${MINGW_PREFIX}/bin/ctags.exe"
+  rm -f "${pkgdir}${MINGW_PREFIX}/share/man/man1/ctags.1.gz"
+
+  local dir="${pkgdir}${MINGW_PREFIX}/share/${_realname}"
+        dir="${dir}/$(ls -1 ${dir} | grep -E '([0-9]+\.[0-9]+)(\.[0-9]+)?')/src"
+
+  mkdir -p "${dir}"
+  cd "${srcdir}/${_realname}/src"
+  cp *.c *.h *.m "${dir}"
+}
+
+# TODO:
+# Patch `shell-file-name' default in the C source code similarly to
+# `source-directory'.
