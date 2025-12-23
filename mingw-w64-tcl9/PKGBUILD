@@ -40,6 +40,13 @@ prepare() {
 
   cp unix/tcl.pc.in win/tcl.pc.in
 
+  echo "Force using system tommath shared library"
+  sed \
+      -e "s/libtommath.dll/libtommath-1.dll/g" \
+      -e "s|^.*\$(COPY) \$(TOMMATH_DIR)/.*/\${TOMMATH_DLL_FILE}.*$|echo ;\\\\|g" \
+      -e "s/\$(shell \$(CYGPATH) '@TOMMATH_LIBS@')/-ltommath/g" \
+      -i "${srcdir}/tcl${pkgver}/win/Makefile.in"
+
   # Using the static libgcc library is problematic when sharing
   # resources across dynamic link libraries, so we must use
   # libgcc*.dll everywhere:
@@ -84,8 +91,9 @@ package() {
   rm "${pkgdir}${MINGW_PREFIX}/bin/zlib1.dll"
   rm "${pkgdir}${MINGW_PREFIX}/share/man/mann/zlib.n"
   rm "${pkgdir}${MINGW_PREFIX}/lib/libz.dll.a"
-  rm "${pkgdir}${MINGW_PREFIX}/bin/libtommath.dll"
+  rm -rf "${pkgdir}${MINGW_PREFIX}/bin/libtommath*.dll"
   rm "${pkgdir}${MINGW_PREFIX}/lib/libtommath.dll.a"
+  rm "${pkgdir}${MINGW_PREFIX}/include/tommath.h"
 
   local _libver=${pkgver%.*}
   _libver=${_libver//./}
@@ -137,6 +145,9 @@ package() {
 
   install -Dm644 "${srcdir}"/${_realname}${pkgver}/win/tcl.m4 "${pkgdir}"${MINGW_PREFIX}/share/aclocal/tcl${pkgver%.*}.m4
   
+  # Resolve conflict with sqlite-analyzer package
+  rm "${pkgdir}"${MINGW_PREFIX}/bin/sqlite3_analyzer
+
   # mingw-w64-sqlite also provides the Tcl sqlite extension, which
   # conflicts with the version provided by this package. Solve the
   # problem removing the extension built here. The rationale is that
